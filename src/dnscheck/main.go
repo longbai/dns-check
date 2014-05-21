@@ -52,6 +52,9 @@ func main() {
 	iploc.IpLocInit(iplocFilePath, true)
 	var rets []Result
 	for _, v := range ns {
+		if v.State != "valid" {
+			continue
+		}
 		ip, err := Query(&v, domain)
 		if err != nil {
 			continue
