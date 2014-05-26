@@ -15,8 +15,27 @@ import (
 type Result struct {
 	NameServer        string
 	NameServerCountry string
-	DomainIp          string
-	DomainCountry     string
+	Ip                string
+	IpCountry         string
+}
+
+func collect(out chan Result, server NameServer, domain string) {
+	ip, err := Query(&server, domain)
+	var r Result
+	r.NameServer = server.Addr()
+	r.NameServerCountry = iploc.COUNTRIES_ZH[server.CountryID]
+	if err != nil {
+		out <- r
+		return
+	}
+
+	r.DomainIp = ip.String()
+	info, err := iploc.GetIpInfo(ip.String())
+	if err == nil {
+		r.DomainCountry = info.Country
+	}
+	out <- r
+	fmt.Printf("%#v\n", r)
 }
 
 func main() {
@@ -51,24 +70,16 @@ func main() {
 	// and speed can grow up about 40 percent than not preload
 	iploc.IpLocInit(iplocFilePath, true)
 	var rets []Result
+	chans := make(chan Result, len(ns))
 	for _, v := range ns {
-		if v.State != "valid" {
-			continue
+		go collect(chans, v, domain)
+	}
+
+	for i := 0; i < len(ns); i++ {
+		done := <-chans
+		if done.DomainIp != "" {
+			rets = append(rets, done)
 		}
-		ip, err := Query(&v, domain)
-		if err != nil {
-			continue
-		}
-		var r Result
-		r.NameServer = v.Addr()
-		r.NameServerCountry = iploc.COUNTRIES_ZH[v.CountryID]
-		r.DomainIp = ip.String()
-		info, err := iploc.GetIpInfo(ip.String())
-		if err == nil {
-			r.DomainCountry = info.Country
-		}
-		rets = append(rets, r)
-		fmt.Printf("%#v\n", r)
 	}
 	if *output != "" {
 		data, err := json.MarshalIndent(rets, "", "")

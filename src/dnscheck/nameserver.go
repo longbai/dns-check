@@ -43,11 +43,24 @@ func (n *NameServer) Addr() string {
 	return addr
 }
 
+func filte(old []NameServer) (ret []NameServer) {
+	for _, v := range old {
+		if v.State == "valid" {
+			ret = append(ret, v)
+		}
+	}
+	return
+}
+
 func loadNameServers(path string) (ns []NameServer, err error) {
 	data, err := ioutil.ReadFile(path)
 	if err != nil {
 		return
 	}
 	err = json.Unmarshal(data, &ns)
+	if err != nil {
+		return
+	}
+	ns = filte(ns)
 	return
 }

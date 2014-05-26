@@ -3,6 +3,7 @@ package main
 import (
 	"errors"
 	"net"
+	"time"
 
 	"github.com/miekg/dns"
 )
@@ -12,6 +13,9 @@ func Query(d DnsServer, domain string) (ip net.IP, err error) {
 	m.SetQuestion(domain, dns.TypeA)
 
 	c := new(dns.Client)
+	c.DialTimeout = 60 * time.Second
+	c.ReadTimeout = 60 * time.Second
+	c.WriteTimeout = 60 * time.Second
 	r, _, err := c.Exchange(m, d.Address())
 	if err != nil {
 		return
