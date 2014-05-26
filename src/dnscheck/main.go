@@ -29,10 +29,10 @@ func collect(out chan Result, server NameServer, domain string) {
 		return
 	}
 
-	r.DomainIp = ip.String()
+	r.Ip = ip.String()
 	info, err := iploc.GetIpInfo(ip.String())
 	if err == nil {
-		r.DomainCountry = info.Country
+		r.IpCountry = info.Country
 	}
 	out <- r
 	fmt.Printf("%#v\n", r)
@@ -77,7 +77,7 @@ func main() {
 
 	for i := 0; i < len(ns); i++ {
 		done := <-chans
-		if done.DomainIp != "" {
+		if done.Ip != "" {
 			rets = append(rets, done)
 		}
 	}
